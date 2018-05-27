@@ -1,0 +1,5 @@
+*.txt
+*.zip
+train-set/
+vali-set/
+__pycache__/
