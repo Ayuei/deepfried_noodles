@@ -3,3 +3,4 @@
 train-set/
 vali-set/
 __pycache__/
+models/
