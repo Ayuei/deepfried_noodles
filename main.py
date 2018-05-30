@@ -20,6 +20,13 @@ def load():
                                         interpolation=True)))
         labels.append(imgNum)
 
+    for image_path in glob.glob("./vali-set/*.png"):
+        image = imageio.imread(image_path)
+        imgNum = int(image_path[15:17]) - 1
+        data.append(np.ravel(cv2.resize(np.array(image), (28,28),
+                                        interpolation=True)))
+        labels.append(imgNum)
+
     data = np.array(data)
     labels = np.atleast_2d(np.array(labels)).T
 
