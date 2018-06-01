@@ -49,65 +49,63 @@ def reverseOneHot(onehotLabels):
     vals = np.argmax(onehotLabels,axis=1)
     return np.atleast_2d(vals).T
 
-data, labels = load()
+def get_stratified_data():
 
-data = normalize(data)
+    data, labels = load()
+    data = normalize(data)
+    print('Total amount:', len(data))
 
-print('Total amount:', len(data))
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=0.33)
+    train = None
+    train_label = None
+    val = None
+    val_label = None
+    test = None
+    test_label = None
 
-sss = StratifiedShuffleSplit(n_splits=1, test_size=0.33)
-train = None
-train_label = None
-val = None
-val_label = None
-test = None
-test_label = None
+    for train_index, test_index in sss.split(data, labels):
+        train = data[train_index]
+        train_label = labels[train_index]
 
-for train_index, test_index in sss.split(data, labels):
-    train = data[train_index]
-    train_label = labels[train_index]
+        test = data[test_index]
+        test_label = labels[test_index]
 
-    test = data[test_index]
-    test_label = labels[test_index]
+    sss = StratifiedShuffleSplit(n_splits=1, test_size=0.70)
+    for val_index, test_index in sss.split(test, test_label):
+        val = test[val_index]
+        val_label = test_label[val_index]
 
-sss = StratifiedShuffleSplit(n_splits=1, test_size=0.70)
-for val_index, test_index in sss.split(test, test_label):
-    val = test[val_index]
-    val_label = test_label[val_index]
+        test = data[test_index]
+        test_label = labels[test_index]
 
-    test = data[test_index]
-    test_label = labels[test_index]
+    print('Train', 'Test', 'Val')
+    print(len(train), len(test), len(val))
 
-print('Train', 'Test', 'Val')
-print(len(train), len(test), len(val))
-
-classCount = len(np.unique(labels))
-convLayers = np.array([[3, 32, 1], [3, 32, 1], [3, 64, 1], [3, 64, 1],
-                       [3, 128, 1], [3, 128, 1], [3, 256, 1], [3, 256, 1]])
-fcLayers = np.array([1024, classCount])
-lr = 0.1e-3
-epochs = 100
-nn = network.NeuralNetworkBase(imageSize=28,
-                               imageChannels=1,
-                               classCount=classCount,
-                               batchSize=32,
-                               convLayers=convLayers,
-                               fcLayers=fcLayers,
-                               learningRate=lr,
-                               epochs=epochs,
-                               name="test_model_even_deeper")
-
-nn.optimize(train, train_label, val, val_label)
-import time
-
-# Garbage Collection
-train = None
-train_label = None
-data = None
-
-time.sleep(0.1)
-
-preds = nn.predict(test, test_label)
-score = metrics.accuracy_score(test_label, preds)
-
-print('Test Accuracy:', score)
+    return train, train_label, test, test_label, val, val_label
+if __name__ == "__main__":
+    train, train_label, test, test_label, val, val_label = get_stratified_data()
+    classCount = len(np.unique(val_label))
+    convLayers = np.array([[3, 32, 1], [3, 32, 1], [3, 64, 1], [3, 64, 1],
+                           [3, 128, 1], [3, 128, 1], [3, 256, 1], [3, 256, 1]])
+    fcLayers = np.array([1024, classCount])
+    lr = 0.1e-3
+    epochs = 100
+    nn = network.NeuralNetworkBase(imageSize=28,
+                                   imageChannels=1,
+                                   classCount=classCount,
+                                   batchSize=32,
+                                   convLayers=convLayers,
+                                   fcLayers=fcLayers,
+                                   learningRate=lr,
+                                   epochs=epochs,
+                                   name="test_model_even_deeper")
+    nn.optimize(train, train_label, val, val_label)
+    import time
+    # Garbage Collection
+    train = None
+    train_label = None
+    data = None
+    time.sleep(0.1)
+    preds = nn.predict(test, test_label)
+    score = metrics.accuracy_score(test_label, preds)
+    print('Test Accuracy:', score)
