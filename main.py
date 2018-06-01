@@ -82,10 +82,11 @@ print('Train', 'Test', 'Val')
 print(len(train), len(test), len(val))
 
 classCount = len(np.unique(labels))
-convLayers = np.array([[3, 32, 1], [3, 32, 1], [3,64,1], [3,64,1]])
+convLayers = np.array([[3, 32, 1], [3, 32, 1], [3, 64, 1], [3, 64, 1],
+                       [3, 128, 1], [3, 128, 1], [3, 256, 1], [3, 256, 1]])
 fcLayers = np.array([1024, classCount])
-lr = 0.5e-3
-epochs = 13
+lr = 0.1e-3
+epochs = 100
 nn = network.NeuralNetworkBase(imageSize=28,
                                imageChannels=1,
                                classCount=classCount,
@@ -94,7 +95,7 @@ nn = network.NeuralNetworkBase(imageSize=28,
                                fcLayers=fcLayers,
                                learningRate=lr,
                                epochs=epochs,
-                               name="test_model")
+                               name="test_model_even_deeper")
 
 nn.optimize(train, train_label, val, val_label)
 import time
@@ -104,9 +105,9 @@ train = None
 train_label = None
 data = None
 
-time.sleep(1)
+time.sleep(0.1)
 
 preds = nn.predict(test, test_label)
 score = metrics.accuracy_score(test_label, preds)
 
-print(score)
+print('Test Accuracy:', score)

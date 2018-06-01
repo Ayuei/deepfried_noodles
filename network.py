@@ -61,7 +61,7 @@ class NeuralNetworkBase:
         layer = tf.layers.batch_normalization(layer)
         #if use_relu:
         #    layer = tf.nn.relu(layer)
-        layer = tf.layers.dropout(layer, rate=0.2)
+        layer = tf.layers.dropout(layer, rate=0.4)
 
         return layer
     def new_conv_layer(self,
@@ -101,8 +101,6 @@ class NeuralNetworkBase:
                                    ksize=[1, 2, 2, 1],
                                    strides=[1, 2, 2, 1],
                                    padding='SAME')
-
-
         return layer, weights
 
     def buildNetwork(self):
@@ -172,17 +170,23 @@ class NeuralNetworkBase:
         self.session = tf.Session()
         self.session.run(tf.global_variables_initializer())
 
+    # Keep track of last 10 models.
+    # If accuracy keeps decreasing over 10 epochs, stop, and select the best.
+
     def optimize(self,X, y, val, val_label):
-        saver = tf.train.Saver(max_to_keep=4)
+        saver = tf.train.Saver()
+        accs = []
+        best_validation = None
+        epochs_since_improvement = 0
         val_feed = {
             self.xp: val,
             self.y_true: self.oneHot(val_label.astype(np.int8))
         }
-
+        save_path = "models/"+self.name+"/"
         if self.load:
             self.session = tf.Session()
-            saver = tf.train.import_meta_graph("models/"+self.name+"/"+"model_cnn")
-            saver.restore(self.session, saver)
+            #saver =tf.train.import_meta_graph(save_path=save_path)
+            saver.restore(self.session, save_path=save_path)
 
         for k in range(self.epochs):
             start_time = time.time()
@@ -200,21 +204,27 @@ class NeuralNetworkBase:
                 extra_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
                 self.session.run([self.optimizer, extra_ops], feed_dict=feed_dict_train)
 
-            # Print status every 100 iterations.
-            if k % 1 == 0:
                 # Calculate the accuracy on the training-set.
-                preds = self.session.run(self.y_pred_cls, feed_dict=val_feed)
-                acc = metrics.accuracy_score(val_label, preds)
-
-                # Message for printing.
+            preds = self.session.run(self.y_pred_cls, feed_dict=val_feed)
+            acc = metrics.accuracy_score(val_label, preds)
+            if best_validation == None:
+                best_validation = acc
+            msg = None
+            if acc > best_validation:
+                saver.save(sess=self.session,
+                           save_path=save_path)
+                msg = "Optimization Iteration: {0:>6}, Validation Accuracy: {1:>6.1%} *"
+                best_validation = acc
+                epochs_since_improvement = 0
+            else:
                 msg = "Optimization Iteration: {0:>6}, Validation Accuracy: {1:>6.1%}"
-                # Print it.
-                print(msg.format(k + 1, acc))
+                epochs_since_improvement += 1
+            print(msg.format(k + 1, acc))
             print('Optimize time taken:%s' % (np.round(time.time() - start_time,2)))
-
-        saver.save(self.session, "models/"+self.name+"/"+"model_cnn")
-        #pickle.dump(self, open("models/"+self.name+"self.pkl", 'w+'))
-
+            if epochs_since_improvement == 4:
+                print('Validation has not improvement for some time. Finishing up')
+                break
+        saver.restore(sess=self.session, save_path=save_path)
     def predict(self, X, y, **kwargs):
         # Number of images in the test-set.
         num_test = len(X)
