@@ -16,15 +16,15 @@ def load():
     for image_path in glob.glob("./train-set/*.png"):
         image = imageio.imread(image_path)
         imgNum = int(image_path[16:18]) - 1
-        data.append(np.ravel(cv2.resize(np.array(image), (28,28),
+        data.append(np.ravel(cv2.resize(np.array(image), (64,64),
                                         interpolation=True)))
         labels.append(imgNum)
 
     for image_path in glob.glob("./vali-set/*.png"):
         image = imageio.imread(image_path)
         imgNum = int(image_path[15:17]) - 1
-        data.append(np.ravel(cv2.resize(np.array(image), (28,28),
-                                        interpolation=True)))
+        data.append(np.ravel(cv2.resize(np.array(image), (64,64),
+                                       interpolation=True)))
         labels.append(imgNum)
 
     data = np.array(data)
