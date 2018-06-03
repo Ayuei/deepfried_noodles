@@ -131,7 +131,7 @@ def train():
 
     model.load_weights("models/keras/"+name+".h5")
     score = model.evaluate(val, val_label)
-    shutil.move(name+".h5", str((1.-score[1])*100)+".h5")
+    shutil.move("models/keras/"+name+".h5", "models/keras/"+str((1.-score[1])*100)+".h5")
     print('--------------------------------------')
     print('model'+str(name)+':')
     print('Test loss:', score[0])
