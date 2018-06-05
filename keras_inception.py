@@ -1,3 +1,4 @@
+import glob
 import shutil
 import uuid
 import math
@@ -13,6 +14,7 @@ from keras.models import Model, load_model
 from keras.layers.pooling import GlobalAveragePooling2D
 from keras.callbacks import EarlyStopping, ModelCheckpoint
 import keras.metrics as metrics
+import tensorflow as tf
 
 img_rows = 0
 img_cols = 0
@@ -97,7 +99,7 @@ def build_network():
 
     return model
 
-def train():
+def train(ensemble = False):
     x_train = np.load('train.npy')
     y_train = np.load('train_labels.npy')
     val = np.load('vali.npy')
@@ -116,6 +118,10 @@ def train():
     val_label = keras.utils.to_categorical(val_label, num_classes)
     model = build_network()
     model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+    if ensemble:
+        return model, val, val_label
+
     model.summary()
 
     name = str(uuid.uuid4())
@@ -140,5 +146,20 @@ def train():
     return score
 
 if __name__ == "__main__":
-    for i in range(20):
-        train()
+
+    model, val, val_label = train(True)
+    ensemble = []
+    for weights in glob.glob("models/keras/*.h5"):
+        model = build_network()
+        model.load_weights(weights)
+        ensemble.append(model)
+    x = Input((img_rows*img_cols,))
+    outputs = [model(x) for model in ensemble]
+    y = Average()(outputs)
+
+    ensemble_model = Model(x, y)
+
+    preds = ensemble_model.predict(val)
+
+    #for i in range(20):
+    #    train()
