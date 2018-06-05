@@ -3,7 +3,7 @@ import glob
 import imageio
 import cv2
 
-img_size = 32
+img_size = 24
 
 def load():
     data = []
