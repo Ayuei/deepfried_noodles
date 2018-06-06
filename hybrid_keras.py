@@ -44,47 +44,29 @@ def inception_module(X, scale=1, predict=False):
 
     out = Concatenate(axis=3)([x11, x33, x55, x33p])
 
-    if predict:
-        predict = AveragePooling2D((5, 5), strides=(1, 1))(X)
-        predict = Conv2D(int(8*scale), (1, 1))(predict)
-        predict = BatchNormalization()(predict)
-        predict = Activation('relu')(predict)
-        predict = Dropout(0.25)(predict)
-        predict = Flatten()(predict)
-        predict = Dense(120)(predict)
-        predict = BatchNormalization()(predict)
-        predict = Activation('relu')(predict)
-        predict = Dense(num_classes, activation='softmax')(predict)
-        return out, predict
-
     return out
 
 def inception_model(X):
+
     x = Reshape((img_cols, img_rows, 1))(X)
+
     x = inception_module(x, 1)
-    x = Conv2D(16, (3, 3))(x)
-    x = BatchNormalization()(x)
-    x = Activation('relu')(x)
+
     x = MaxPooling2D((2,2))(x)
-    x = Conv2D(32, (3, 3))(x)
-    x = BatchNormalization()(x)
-    x = Activation('relu')(x)
-    x = Conv2D(64, (3, 3))(x)
+    x = Conv2D(256, (3, 3))(x)
     x = BatchNormalization()(x)
     x = Activation('relu')(x)
 
-    x = inception_module(x, 2)
-    x = inception_module(x, 3)
+    x = MaxPooling2D((2,2))(x)
+    x = inception_module(x, 1)
 
     x = MaxPooling2D((2,2))(x)
     x = Flatten()(x)
-    x = Dense(1024)(x)
+    x = Dense(2048)(x)
     x = Dropout(0.2)(x)
     x = Dense(num_classes)(x)
 
     out = Activation('softmax')(x)
-    #soft3 = Activation('softmax')(x)
-    #out = Average()([soft1, soft2, soft3])
 
     return out
 
@@ -126,11 +108,11 @@ def train():
     name = str(uuid.uuid4())
     save_best_model = ModelCheckpoint("models/keras/"+name+".h5",
                                       monitor='val_acc', verbose=1,
-                                      save_best_only=True, mode='max',
+                                      save_best_only=True,
                                       save_weights_only=True)
-    early_stopping = EarlyStopping(monitor='val_acc', min_delta=0.05,
-                                   patience=3, verbose=1)
-    model.fit(x_train, y_train, batch_size=128,
+    early_stopping = EarlyStopping(monitor='val_acc',
+                                   patience=4, verbose=1)
+    model.fit(x_train, y_train, batch_size=256,
               epochs=200, validation_data=(val, val_label)
              ,verbose=1, callbacks=[save_best_model, early_stopping])
 
@@ -180,6 +162,7 @@ def main(ensemble=False):
 
 
 if __name__== "__main__":
+    #for in range(20):
     train()
     #if sys.argv == "TRAIN":
 #        main(False)

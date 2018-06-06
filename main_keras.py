@@ -52,20 +52,20 @@ model.compile(loss=keras.losses.categorical_crossentropy,
               optimizer=keras.optimizers.Adam(),
               metrics=['accuracy'])
 model.summary()
-image_gen = ImageDataGenerator(rotation_range=45,
-                               width_shift_range=0.10,
-                               height_shift_range=0.10,
-                               horizontal_flip=True,
-                               vertical_flip=True)
-image_gen.fit(x_train)
-model.fit_generator(image_gen.flow(x_train, y_train, batch_size=batch_size),
-                    epochs=epochs, validation_data=(val,val_label))
+#image_gen = ImageDataGenerator(rotation_range=45,
+#                               width_shift_range=0.10,
+#                               height_shift_range=0.10,
+#                               horizontal_flip=True,
+#                               vertical_flip=True)
+#image_gen.fit(x_train)
+#model.fit_generator(image_gen.flow(x_train, y_train, batch_size=batch_size),
+#                    epochs=epochs, validation_data=(val,val_label))
 
-#model.fit(x_train, y_train,
-#          batch_size=batch_size,
-#          epochs=epochs,
-#          verbose=1,
-#          validation_data=(val, val_label))
+model.fit(x_train, y_train,
+          batch_size=batch_size,
+          epochs=epochs,
+          verbose=1,
+          validation_data=(val, val_label))
 
 score = model.evaluate(val, val_label, verbose=0)
 print('Val loss:', score[0])
